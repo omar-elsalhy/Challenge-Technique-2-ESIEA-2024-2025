@@ -22,11 +22,14 @@ def main():
 
     args = parser.parse_args()
 
+    #Variable contenant l'output/les logs générés au cours du programme
     results = {}
 
+    #Option de sniff(=écoute) sur une interface réseau
     #if args.sniff:
         #start_sniffer(interface=args.interface, bpf_filter=args.filter, output_file=args.output)
 
+    #Scan de l'adresse IP ou du subnet (liste d'adresses IP)
     if args.target and args.ports:
         targets = args.target.split(',')
         ports = parse_ports(args.ports)
@@ -37,12 +40,7 @@ def main():
             banners = grab_banners(results)
             results = {ip: {**results[ip], 'banners': banners.get(ip, {})} for ip in results}
 
-    elif args.grab_banner:
-        # Only banner grabbing, assumes ports + target are provided
-        targets = args.target.split(',')
-        ports = parse_ports(args.ports)
-        results = grab_banners({t: {"ports": ports} for t in targets})
-
+    #Génération du rapport
     #if args.report and results:
         #generate_report(results, format=args.report)
 
