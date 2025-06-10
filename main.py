@@ -1,8 +1,8 @@
 import argparse
 from scanner import scan_targets
 from banner_grabber import grab_banners
-from sniffer import start_sniffer
-from reporter import generate_report
+#from sniffer import start_sniffer
+#from reporter import generate_report
 from utils import validate_ip, parse_ports
 
 
@@ -24,8 +24,8 @@ def main():
 
     results = {}
 
-    if args.sniff:
-        start_sniffer(interface=args.interface, bpf_filter=args.filter, output_file=args.output)
+    #if args.sniff:
+        #start_sniffer(interface=args.interface, bpf_filter=args.filter, output_file=args.output)
 
     if args.target and args.ports:
         targets = args.target.split(',')
@@ -43,8 +43,8 @@ def main():
         ports = parse_ports(args.ports)
         results = grab_banners({t: {"ports": ports} for t in targets})
 
-    if args.report and results:
-        generate_report(results, format=args.report)
+    #if args.report and results:
+        #generate_report(results, format=args.report)
 
 
 if __name__ == "__main__":
