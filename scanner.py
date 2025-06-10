@@ -1,56 +1,71 @@
-# scanner.py : Pour le scan d'IP et de ports
-
 import socket
 import ipaddress
+from utils import logger, validate_ip, timer
+from time import sleep
 
-def is_host_up(ip, ports=[80, 443], timeout=0.5):
-    #Vérifie si une machine est active via TCP connect().
-    
-    for port in ports:
-        try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                sock.settimeout(timeout)
-                if sock.connect_ex((ip, port)) == 0:
-                    return True
-        except:
-            continue
-    return False
-
-def scan_port(ip, port, timeout=1):
-     #Scanne un port TCP via connect().
-    
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.settimeout(timeout)
-            if sock.connect_ex((ip, port)) == 0:
-                return True
-    except socket.timeout:
-        pass
-    except socket.error as e:
-        print(f"[!] Erreur socket : {e}")
-    return False
-
-def scan_targets(targets, ports, timeout=1):
-    #Scanne une liste d'IP pour détecter les ports ouverts.
-    
+@timer
+def scan_targets(targets, ports, udp=False, delay=None):
+    # Scanne une liste d'IP sur les ports spécifiés en TCP ou UDP
     results = {}
 
     for target in targets:
         try:
-            ip_obj = ipaddress.ip_address(target)
-        except ValueError:
-            print(f"[!] Adresse IP invalide : {target}")
-            continue
+            ips = []
+            if '/' in target:
+                ips = [str(ip) for ip in ipaddress.IPv4Network(target, strict=False)]
+            else:
+                ips = [target]
 
-        if is_host_up(target, ports):
-            open_ports = []
-            for port in ports:
-                if scan_port(target, port, timeout):
-                    open_ports.append(port)
-            results[target] = {
-                "open_ports": open_ports
-            }
-        else:
-            print(f"[-] {target} est injoignable.")
+            for ip in ips:
+                if not validate_ip(ip):
+                    logger(f"[!] Invalid IP: {ip}")
+                    continue
+
+                logger(f"[*] Scanning {ip}...")
+                open_ports = []
+                for port in ports:
+                    if udp:
+                        if udp_scan(ip, port):
+                            open_ports.append(port)
+                    else:
+                        if tcp_connect_scan(ip, port):
+                            open_ports.append(port)
+                    if delay:
+                        sleep(delay)
+
+                if open_ports:
+                    results[ip] = {"ports": open_ports}
+
+        except Exception as e:
+            logger(f"[!] Error scanning {target}: {e}")
 
     return results
+
+def tcp_connect_scan(ip, port, timeout=1):
+    # Essaie de se connecter à un port TCP pour vérifier s’il est ouvert
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(timeout)
+            result = s.connect_ex((ip, port))
+            if result == 0:
+                logger(f"[+] TCP Open: {ip}:{port}")
+                return True
+    except Exception as e:
+        logger(f"[!] TCP scan error on {ip}:{port} - {e}")
+    return False
+
+def udp_scan(ip, port, timeout=2):
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.settimeout(timeout)
+            s.sendto(b'\x00', (ip, port))
+            try:
+                data, _ = s.recvfrom(1024)
+                logger(f"[+] UDP Open (response): {ip}:{port}")
+                return True
+            except socket.timeout:
+                logger(f"[?] UDP No response (could be open): {ip}:{port}")
+                return True
+    except Exception as e:
+        logger(f"[!] UDP scan error on {ip}:{port} - {e}")
+    return False
