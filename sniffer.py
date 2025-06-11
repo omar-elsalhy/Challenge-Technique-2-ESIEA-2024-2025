@@ -1,7 +1,7 @@
 """
-Packet sniffer module using Scapy.
+Module de capture de paquets réseau utilisant Scapy.
 
-This module provides functionality to capture and analyze network packets.
+Ce module fournit des fonctionnalités pour capturer et analyser les paquets réseau.
 """
 
 from typing import Optional, Callable
@@ -11,10 +11,10 @@ from utils import logger
 
 def packet_callback(packet: Packet) -> None:
     """
-    Process captured packets and log their summary.
+    Traite les paquets capturés et affiche leur résumé dans les logs.
     
     Args:
-        packet: The captured network packet
+        packet: Le paquet réseau capturé
     """
     summary = packet.summary()
     logger(f"[SNIFF] {summary}")
@@ -28,21 +28,21 @@ def start_sniffing(
     packet_handler: Optional[Callable[[Packet], None]] = None
 ) -> bool:
     """
-    Start packet sniffing with specified parameters.
+    Démarre la capture de paquets avec les paramètres spécifiés.
     
     Args:
-        interface: Network interface to sniff on (None for all interfaces)
-        bpf_filter: BPF filter string for packet filtering
-        output: Output file path to save captured packets
-        count: Number of packets to capture (0 for unlimited)
-        packet_handler: Custom packet processing function
+        interface: Interface réseau à écouter (None pour toutes les interfaces)
+        bpf_filter: Chaîne de filtrage BPF pour filtrer les paquets
+        output: Chemin du fichier de sortie pour sauvegarder les paquets capturés
+        count: Nombre de paquets à capturer (0 pour illimité)
+        packet_handler: Fonction personnalisée de traitement des paquets
         
     Returns:
-        bool: True if sniffing completed successfully, False otherwise
+        bool: True si la capture s'est terminée avec succès, False sinon
         
     Raises:
-        PermissionError: When running without sufficient privileges
-        ValueError: When invalid parameters are provided
+        PermissionError: Lorsque l'exécution se fait sans privilèges suffisants
+        ValueError: Lorsque des paramètres invalides sont fournis
     """
     if count < 0:
         raise ValueError("Count must be non-negative")
