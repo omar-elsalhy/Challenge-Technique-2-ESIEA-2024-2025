@@ -1,11 +1,27 @@
 import socket
 import ipaddress
+import subprocess
+import platform
 from utils import logger, validate_ip, timer
 from time import sleep
 
+def is_host_alive(ip, timeout=1):
+    """
+    Ping l'hôte pour voir s'il est actif.
+    Compatible Windows/Linux.
+    """
+    param = '-n' if platform.system().lower() == 'windows' else '-c'
+    command = ['ping', param, '1', '-w', str(timeout * 1000), ip]
+
+    try:
+        result = subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return result.returncode == 0
+    except Exception as e:
+        logger(f"[!] Ping error on {ip}: {e}")
+        return False
+
 @timer
 def scan_targets(targets, ports, udp=False, delay=None):
-    # Scanne une liste d'IP sur les ports spécifiés en TCP ou UDP
     results = {}
 
     for target in targets:
@@ -20,8 +36,16 @@ def scan_targets(targets, ports, udp=False, delay=None):
                 if not validate_ip(ip):
                     logger(f"[!] Invalid IP: {ip}")
                     continue
+                
+                # Vérification si hôte est alive ou non
+                logger(f"[*] Probing host {ip}...")
+                if not is_host_alive(ip):
+                    logger(f"[-] Host {ip} is down or not responding.")
+                    continue
+                else :
+                    logger(f"[+] Host {ip} is active.")
+                
 
-                logger(f"[*] Scanning {ip}...")
                 open_ports = []
                 for port in ports:
                     if udp:
@@ -33,8 +57,8 @@ def scan_targets(targets, ports, udp=False, delay=None):
                     if delay:
                         sleep(delay)
 
-                if open_ports:
-                    results[ip] = {"ports": open_ports}
+                
+                results[ip] = {"ports": open_ports}
 
         except Exception as e:
             logger(f"[!] Error scanning {target}: {e}")
@@ -42,7 +66,6 @@ def scan_targets(targets, ports, udp=False, delay=None):
     return results
 
 def tcp_connect_scan(ip, port, timeout=1):
-    # Essaie de se connecter à un port TCP pour vérifier s’il est ouvert
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.settimeout(timeout)
