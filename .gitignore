@@ -2,4 +2,4 @@
 __pycache__/
 *.pyc
 test_banner_server.py
-scan_report.*
+scan_report*

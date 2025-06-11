@@ -1,7 +1,7 @@
 import argparse
 from scanner import scan_targets
 from banner_grabber import grab_banners
-#from sniffer import start_sniffer
+from sniffer import start_sniffing
 from reporter import generate_report
 from utils import validate_ip, parse_ports
 
@@ -17,6 +17,7 @@ def main():
     parser.add_argument("--interface", help="Network interface to sniff on")
     parser.add_argument("--filter", help="BPF filter for packet sniffer (e.g., 'tcp port 80')")
     parser.add_argument("--output", help="Output file for sniffer capture (e.g., capture.pcap)")
+    parser.add_argument("--max", help="Maximum number of packets to capture")
     parser.add_argument("--report", choices=['json', 'csv', 'md', 'html'], help="Report format")
     parser.add_argument("--delay", type=int, help="Delay between scans (in seconds)")
 
@@ -25,9 +26,9 @@ def main():
     #Variable contenant l'output/les logs générés au cours du programme
     results = {}
 
-    #Option de sniff(=écoute) sur une interface réseau
-    #if args.sniff:
-        #start_sniffer(interface=args.interface, bpf_filter=args.filter, output_file=args.output)
+    #Option de sniff(=écoute) sur une interface réseau ou sur toutes les interfaces
+    if args.sniff:
+        start_sniffing(interface=args.interface, bpf_filter=args.filter, output=args.output, count=int(args.max))
 
     #Scan de l'adresse IP ou du subnet (liste d'adresses IP)
     if args.target and args.ports:
