@@ -73,6 +73,6 @@ def grab_banners(scan_results):
                 logger(f"[+] {ip}:{port} -> {banner}")
             
             # Stockage même si bannière vide pour cohérence
-            banners[ip][port] = banner
+            banners[ip][str(port)] = banner
     
     return banners

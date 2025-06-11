@@ -1,50 +1,157 @@
-import argparse
+import tkinter as tk
+from tkinter import ttk, messagebox, filedialog
 from scanner import scan_targets
 from banner_grabber import grab_banners
 from sniffer import start_sniffing
 from reporter import generate_report
 from utils import validate_ip, parse_ports
+import threading
+import io
+import sys
+import argparse
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Python Network Scanner")
+class RedirectText(object):
+    def __init__(self, text_ctrl):
+        self.output = text_ctrl
 
-    parser.add_argument("--target", help="Target IP, subnet, or comma-separated list")
-    parser.add_argument("--ports", help="Ports to scan (e.g., 22,80,443 or 20-100)")
-    parser.add_argument("--udp", action="store_true", help="Use UDP scan instead of TCP")
-    parser.add_argument("--grab-banner", action="store_true", help="Enable banner grabbing")
-    parser.add_argument("--sniff", action="store_true", help="Enable passive sniffer mode")
-    parser.add_argument("--interface", help="Network interface to sniff on")
-    parser.add_argument("--filter", help="BPF filter for packet sniffer (e.g., 'tcp port 80')")
-    parser.add_argument("--output", help="Output file for sniffer capture (e.g., capture.pcap)")
-    parser.add_argument("--max", help="Maximum number of packets to capture")
-    parser.add_argument("--report", choices=['json', 'csv', 'md', 'html'], help="Report format")
-    parser.add_argument("--delay", type=int, help="Delay between scans (in seconds)")
+    def write(self, string):
+        self.output.insert(tk.END, string)
+        self.output.see(tk.END)
 
-    args = parser.parse_args()
+    def flush(self):
+        pass
 
-    #Variable contenant l'output/les logs générés au cours du programme
-    results = {}
+def parse_args():
+    parser = argparse.ArgumentParser(description="Pre-fill GUI fields for scanning or sniffing.")
+    parser.add_argument("--target", help="Target IP(s)", default="127.0.0.1")
+    parser.add_argument("--ports", help="Ports to scan", default="21,22,25,80,110,135,143,443,445")
+    parser.add_argument("--udp", action="store_true", help="Use UDP")
+    parser.add_argument("--grab_banner", action="store_true", help="Grab banners")
+    parser.add_argument("--report", choices=["json", "csv", "md", "html"], help="Report format")
+    parser.add_argument("--delay", type=int, help="Delay between scans (sec)", default=0)
 
-    #Option de sniff(=écoute) sur une interface réseau ou sur toutes les interfaces
-    if args.sniff:
-        start_sniffing(interface=args.interface, bpf_filter=args.filter, output=args.output, count=int(args.max))
+    parser.add_argument("--interface", help="Sniffer interface", default="Wi-Fi")
+    parser.add_argument("--filter", help="BPF filter", default="tcp port 443")
+    parser.add_argument("--output", help="Output .pcap file", default="sniff_output.pcap")
+    parser.add_argument("--max_packets", type=int, help="Max packets to capture", default=30)
+    return parser.parse_args()
 
-    #Scan de l'adresse IP ou du subnet (liste d'adresses IP)
-    if args.target and args.ports:
-        targets = args.target.split(',')
-        ports = parse_ports(args.ports)
+def run_scan(target, ports, udp, grab_banner, report_format, delay, output_widget):
+    sys.stdout = RedirectText(output_widget)
+    sys.stderr = RedirectText(output_widget)
+    
+    try:
+        targets = target.split(',')
+        ports = parse_ports(ports)
+        results = scan_targets(targets, ports, udp=udp, delay=delay)
 
-        results = scan_targets(targets, ports, udp=args.udp, delay=args.delay)
-
-        if args.grab_banner:
+        if grab_banner:
             banners = grab_banners(results)
-            results = {ip: {**results[ip], 'banners': banners.get(ip, {})} for ip in results}
+            for ip in targets:
+                results[ip]["banners"] = banners.get(ip, {})
 
-    #Génération du rapport
-    if args.report and results:
-        generate_report(results, format=args.report)
+        if report_format and results:
+            generate_report(results, format=report_format)
 
+        print("[+] Scanning complete. Report generated.")
+    except Exception as e:
+        print(f"[!] Error: {e}")
+
+
+def run_sniffer(interface, bpf_filter, output, max_packets, output_widget):
+    sys.stdout = RedirectText(output_widget)
+    sys.stderr = RedirectText(output_widget)
+
+    try:
+        count = int(max_packets) if max_packets else 0
+    except ValueError:
+        count = 0
+
+    start_sniffing(interface=interface, bpf_filter=bpf_filter, output=output, count=count)
+    print("[+] Packet capture complete.")
+
+def create_gui(args):
+    root = tk.Tk()
+    root.title("Python Network Pentest Tool")
+
+    notebook = ttk.Notebook(root)
+    scan_frame = ttk.Frame(notebook)
+    sniff_frame = ttk.Frame(notebook)
+    notebook.add(scan_frame, text="Scan")
+    notebook.add(sniff_frame, text="Sniff")
+    notebook.pack(fill='both', expand=True)
+
+    # Output Text Box
+    output_box = tk.Text(root, wrap='word', height=15)
+    output_box.pack(fill='both', expand=True, padx=5, pady=5)
+
+    # Clear Output Button
+    clear_button = ttk.Button(root, text="Clear Output", command=lambda: output_box.delete('1.0', tk.END))
+    clear_button.pack(pady=5)
+
+    # Scan Tab
+    ttk.Label(scan_frame, text="Target").grid(row=0, column=0, sticky='w')
+    target_entry = ttk.Entry(scan_frame, width=40)
+    target_entry.insert(0, args.target)
+    target_entry.grid(row=0, column=1)
+
+    ttk.Label(scan_frame, text="Ports").grid(row=1, column=0, sticky='w')
+    ports_entry = ttk.Entry(scan_frame, width=40)
+    ports_entry.insert(0, args.ports)
+    ports_entry.grid(row=1, column=1)
+
+    udp_var = tk.BooleanVar()
+    udp_var.set(args.udp)
+    ttk.Checkbutton(scan_frame, text="UDP Scan", variable=udp_var).grid(row=2, column=1, sticky='w')
+
+    grab_banner_var = tk.BooleanVar()
+    grab_banner_var.set(args.grab_banner)
+    ttk.Checkbutton(scan_frame, text="Grab Banners", variable=grab_banner_var).grid(row=3, column=1, sticky='w')
+
+    ttk.Label(scan_frame, text="Report Format").grid(row=4, column=0, sticky='w')
+    report_format = ttk.Combobox(scan_frame, values=["json", "csv", "md", "html"])
+    report_format.set(args.report if args.report else "")
+    report_format.grid(row=4, column=1)
+
+    ttk.Label(scan_frame, text="Delay (sec)").grid(row=5, column=0, sticky='w')
+    delay_entry = ttk.Entry(scan_frame, width=10)
+    delay_entry.insert(0, str(args.delay))
+    delay_entry.grid(row=5, column=1, sticky='w')
+
+    ttk.Button(scan_frame, text="Start Scan", command=lambda: threading.Thread(target=run_scan, args=(
+        target_entry.get(), ports_entry.get(), udp_var.get(), grab_banner_var.get(),
+        report_format.get(), int(delay_entry.get()) if delay_entry.get().isdigit() else 0,
+        output_box
+    )).start()).grid(row=6, column=1, pady=10)
+
+    # Sniff Tab
+    ttk.Label(sniff_frame, text="Interface (Default: all)").grid(row=0, column=0, sticky='w')
+    interface_entry = ttk.Entry(sniff_frame, width=40)
+    interface_entry.insert(0, args.interface)
+    interface_entry.grid(row=0, column=1)
+
+    ttk.Label(sniff_frame, text="BPF Filter").grid(row=1, column=0, sticky='w')
+    filter_entry = ttk.Entry(sniff_frame, width=40)
+    filter_entry.insert(0, args.filter)
+    filter_entry.grid(row=1, column=1)
+
+    ttk.Label(sniff_frame, text="Output File").grid(row=2, column=0, sticky='w')
+    output_entry = ttk.Entry(sniff_frame, width=40)
+    output_entry.insert(0, args.output)
+    output_entry.grid(row=2, column=1)
+
+    ttk.Label(sniff_frame, text="Max Packets").grid(row=3, column=0, sticky='w')
+    max_packets_entry = ttk.Entry(sniff_frame, width=10)
+    max_packets_entry.insert(0, str(args.max_packets))
+    max_packets_entry.grid(row=3, column=1, sticky='w')
+
+    ttk.Button(sniff_frame, text="Start Sniffing", command=lambda: threading.Thread(target=run_sniffer, args=(
+        interface_entry.get(), filter_entry.get(), output_entry.get(), max_packets_entry.get(), output_box
+    )).start()).grid(row=4, column=1, pady=10)
+
+    root.mainloop()
 
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    create_gui(args)

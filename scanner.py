@@ -4,6 +4,8 @@ import subprocess
 import platform
 from utils import logger, validate_ip, timer
 from time import sleep
+from banner_grabber import grab_banner
+
 
 def is_host_alive(ip, timeout=1):
     """
@@ -58,7 +60,13 @@ def scan_targets(targets, ports, udp=False, delay=None):
                         sleep(delay)
 
                 
-                results[ip] = {"ports": open_ports}
+                service_map = {str(port): socket.getservbyport(port, 'tcp') if not udp else 'udp' for port in open_ports}
+                #banner_map = {str(port): grab_banner(ip, port) for port in open_ports}
+                results[ip] = {
+                    "ports": open_ports,
+                    "services": service_map,
+                    "banners": {}
+                }
 
         except Exception as e:
             logger(f"[!] Error scanning {target}: {e}")

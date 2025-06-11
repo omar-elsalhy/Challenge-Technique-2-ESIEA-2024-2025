@@ -2,35 +2,111 @@
 Utilitaires pour le scanner réseau Python.
 
 Ce module fournit des fonctions d'aide pour la validation d'IP, le parsing de ports,
-le logging et la mesure de performance.
+le logging avec support GUI et la mesure de performance.
 """
 
 import ipaddress
 import logging
 from functools import wraps
 from time import time
-from typing import List, Callable, Any
+from typing import List, Callable, Any, Optional, Protocol
 
 
-# Configuration du système de logging
+# Variable globale pour stocker la référence du widget GUI de sortie
+_gui_output_widget: Optional['GUIOutputWidget'] = None
+
+
+class GUIOutputWidget(Protocol):
+    """
+    Protocole définissant l'interface requise pour un widget de sortie GUI.
+    
+    Cette interface permet de découpler le code du framework GUI spécifique
+    utilisé (tkinter, PyQt, etc.).
+    """
+    
+    def insert(self, position: str, text: str) -> None:
+        """
+        Insère du texte à la position spécifiée.
+        
+        Args:
+            position: Position d'insertion (ex: "end" pour la fin)
+            text: Texte à insérer
+        """
+        ...
+    
+    def see(self, position: str) -> None:
+        """
+        Fait défiler le widget pour rendre visible la position spécifiée.
+        
+        Args:
+            position: Position à rendre visible (ex: "end" pour la fin)
+        """
+        ...
+
+
+# Configuration du système de logging pour la console
 logging.basicConfig(
     level=logging.INFO, 
     format='%(message)s'
 )
 
 
-def logger(message: str) -> None:
+def set_output_widget(widget: Optional[GUIOutputWidget]) -> None:
     """
-    Fonction de logging simplifiée pour l'application.
+    Configure le widget GUI pour la sortie des logs.
+    
+    Cette fonction permet d'associer un widget GUI (comme un Text widget tkinter)
+    au système de logging pour afficher les messages à la fois en console et dans l'interface.
     
     Args:
-        message (str): Message à logger
-    
-    Note:
-        Utilise le niveau INFO par défaut. Pour un vrai projet,
-        considérer différents niveaux (DEBUG, WARNING, ERROR).
+        widget: Widget GUI supportant les méthodes insert() et see(), ou None pour désactiver
+        
+    Example:
+        # Avec tkinter
+        import tkinter as tk
+        root = tk.Tk()
+        text_widget = tk.Text(root)
+        set_output_widget(text_widget)
+        
+        # Pour désactiver le logging GUI
+        set_output_widget(None)
     """
-    logging.info(message)
+    global _gui_output_widget
+    _gui_output_widget = widget
+
+
+def logger(message: str) -> None:
+    """
+    Fonction de logging hybride pour l'application.
+    
+    Affiche les messages à la fois dans la console et dans le widget GUI
+    s'il a été configuré via set_output_widget().
+    
+    Args:
+        message: Message à logger
+        
+    Note:
+        - Les messages sont toujours affichés en console
+        - L'affichage GUI est conditionnel selon la configuration
+        - Le widget GUI défile automatiquement vers le dernier message
+        
+    Example:
+        logger("[INFO] Application démarrée")
+        logger("[ERROR] Connexion échouée")
+    """
+    # Affichage console
+    if _gui_output_widget is None:
+        print(message)
+
+    
+    # Affichage GUI (conditionnel)
+    if _gui_output_widget is not None:
+        try:
+            _gui_output_widget.insert("end", message + "\n")
+            _gui_output_widget.see("end")
+        except Exception as e:
+            # En cas d'erreur avec le widget GUI, on continue avec la console uniquement
+            print(f"[WARNING] Erreur widget GUI: {e}")
 
 
 def validate_ip(ip: str) -> bool:
@@ -38,7 +114,7 @@ def validate_ip(ip: str) -> bool:
     Valide une adresse IP (IPv4 ou IPv6).
     
     Args:
-        ip (str): Chaîne représentant une adresse IP
+        ip: Chaîne représentant une adresse IP
     
     Returns:
         bool: True si l'IP est valide, False sinon
@@ -68,7 +144,7 @@ def parse_ports(ports_str: str) -> List[int]:
     - Combinaisons : "22,80-85,443"
     
     Args:
-        ports_str (str): Chaîne de ports à parser
+        ports_str: Chaîne de ports à parser
     
     Returns:
         List[int]: Liste triée des ports uniques
@@ -124,7 +200,7 @@ def timer(func: Callable) -> Callable:
     Décorateur pour mesurer le temps d'exécution d'une fonction.
     
     Args:
-        func (Callable): Fonction à décorer
+        func: Fonction à décorer
     
     Returns:
         Callable: Fonction décorée qui log son temps d'exécution
