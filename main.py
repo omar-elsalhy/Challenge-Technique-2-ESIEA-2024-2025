@@ -2,7 +2,7 @@ import argparse
 from scanner import scan_targets
 from banner_grabber import grab_banners
 #from sniffer import start_sniffer
-#from reporter import generate_report
+from reporter import generate_report
 from utils import validate_ip, parse_ports
 
 
@@ -41,8 +41,8 @@ def main():
             results = {ip: {**results[ip], 'banners': banners.get(ip, {})} for ip in results}
 
     #Génération du rapport
-    #if args.report and results:
-        #generate_report(results, format=args.report)
+    if args.report and results:
+        generate_report(results, format=args.report)
 
 
 if __name__ == "__main__":
