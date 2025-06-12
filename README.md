@@ -64,7 +64,9 @@ pip install scapy tkinter
 
 ## 💻 Utilisation
 
-### Interface en ligne de commande
+### Ligne de commande
+
+La ligne de commande pré-remplit l'interface graphique avec les options souhaitées.
 
 ```bash
 python main.py [OPTIONS]

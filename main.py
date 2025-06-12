@@ -2,14 +2,13 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from scanner import scan_targets
 from banner_grabber import grab_banners
-from sniffer import start_sniffing
+from sniffer import start_sniffing, stop_event
 from reporter import generate_report
 from utils import validate_ip, parse_ports
 import threading
 import io
 import sys
 import argparse
-
 
 class RedirectText(object):
     def __init__(self, text_ctrl):
@@ -30,22 +29,19 @@ def parse_args():
     parser.add_argument("--grab_banner", action="store_true", default=True, help="Grab banners")
     parser.add_argument("--report", choices=["json", "csv", "md", "html"], help="Report format", default="html")
     parser.add_argument("--delay", type=int, help="Delay between scans (sec)", default=0)
-
     parser.add_argument("--interface", help="Sniffer interface", default="Wi-Fi")
     parser.add_argument("--filter", help="BPF filter", default="tcp port 443")
     parser.add_argument("--output", help="Output .pcap file", default="sniff_output.pcap")
-    parser.add_argument("--max_packets", type=int, help="Max packets to capture", default=30)
-
+    parser.add_argument("--max_packets", type=int, help="Max packets to capture")
     parser.add_argument("--timeout", type=int, help="Timeout per port (sec)", default=2)
     parser.add_argument("--threads", type=int, help="Number of concurrent threads", default=1)
     parser.add_argument("--exclude", help="Comma-separated IPs to exclude", default="127.0.0.2")
     parser.add_argument("--verbose", action="store_true", default=True, help="Enable verbose output")
-
     return parser.parse_args()
 
 def run_scan(target, ports, udp, grab_banner, report_format, delay, output_widget,
              timeout, threads, exclude, verbose):
-    
+
     sys.stdout = RedirectText(output_widget)
     sys.stderr = RedirectText(output_widget)
 
@@ -71,7 +67,21 @@ def run_scan(target, ports, udp, grab_banner, report_format, delay, output_widge
     except Exception as e:
         print(f"[!] Scan Error: {e}")
 
+def run_sniffer_button(interface, bpf_filter, output, max_packets, output_widget, start_button, stop_button):
+    def _run():
+        start_button.config(state='disabled')
+        stop_button.config(state='normal')
+        stop_event.clear()
+        run_sniffer(interface, bpf_filter, output, max_packets, output_widget)
+        start_button.config(state='normal')
+        stop_button.config(state='disabled')
 
+    threading.Thread(target=_run).start()
+
+def stop_sniffer_button(start_button, stop_button):
+    stop_event.set()
+    start_button.config(state='normal')
+    stop_button.config(state='disabled')
 
 def run_sniffer(interface, bpf_filter, output, max_packets, output_widget):
     sys.stdout = RedirectText(output_widget)
@@ -96,11 +106,9 @@ def create_gui(args):
     notebook.add(sniff_frame, text="Sniff")
     notebook.pack(fill='both', expand=True)
 
-    # Output Text Box
     output_box = tk.Text(root, wrap='word', height=15)
     output_box.pack(fill='both', expand=True, padx=5, pady=5)
 
-    # Clear Output Button
     clear_button = ttk.Button(root, text="Clear Output", command=lambda: output_box.delete('1.0', tk.END))
     clear_button.pack(pady=5)
 
@@ -178,8 +186,7 @@ def create_gui(args):
     )).start()).grid(row=11, column=1, pady=10)
 
 
-
-    # Sniff Tab
+    # SNIFF TAB WIDGETS
     ttk.Label(sniff_frame, text="Interface (all = keep field empty)").grid(row=0, column=0, sticky='w')
     interface_entry = ttk.Entry(sniff_frame, width=40)
     interface_entry.insert(0, args.interface)
@@ -200,9 +207,24 @@ def create_gui(args):
     max_packets_entry.insert(0, str(args.max_packets))
     max_packets_entry.grid(row=3, column=1, sticky='w')
 
-    ttk.Button(sniff_frame, text="Start Sniffing", command=lambda: threading.Thread(target=run_sniffer, args=(
-        interface_entry.get(), filter_entry.get(), output_entry.get(), max_packets_entry.get(), output_box
-    )).start()).grid(row=4, column=1, pady=10)
+    start_sniff_btn = ttk.Button(sniff_frame, text="Start Sniffing")
+    start_sniff_btn.grid(row=4, column=1, pady=10)
+
+    stop_sniff_btn = ttk.Button(sniff_frame, text="Stop Sniffing")
+    stop_sniff_btn.grid(row=5, column=1, pady=10)
+    stop_sniff_btn.config(state='disabled')
+
+    start_sniff_btn.config(command=lambda: run_sniffer_button(
+        interface_entry.get(),
+        filter_entry.get(),
+        output_entry.get(),
+        max_packets_entry.get(),
+        output_box,
+        start_sniff_btn,
+        stop_sniff_btn
+    ))
+
+    stop_sniff_btn.config(command=lambda: stop_sniffer_button(start_sniff_btn, stop_sniff_btn))
 
     root.mainloop()
 
