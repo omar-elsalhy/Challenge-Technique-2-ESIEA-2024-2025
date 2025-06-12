@@ -1,93 +1,280 @@
-# PYTHON NETWORK PENTESTING TOOL
+# 🔍 Python Network Pentest Tool
 
+Un outil de pentest réseau complet développé en Python, inspiré de Nmap, capable de scanner des plages IP, identifier les ports ouverts, récupérer des bannières, sniffer le trafic réseau et générer des rapports détaillés.
 
+## 📋 Table des matières
 
-## Getting started
+- [Fonctionnalités](#-fonctionnalités)
+- [Architecture](#-architecture)
+- [Installation](#-installation)
+- [Utilisation](#-utilisation)
+  - [Interface en ligne de commande](#interface-en-ligne-de-commande)
+  - [Interface graphique](#interface-graphique)
+- [Exemples d'utilisation](#-exemples-dutilisation)
+- [Options scanner](#-options)
+  - [Options basique](#-options-basique)
+  - [Options avancées](#-options-avancées)
+- [Options sniffer](#-options)
+- [Génération de rapports](#-génération-de-rapports)
+- [Sécurité et éthique](#-sécurité-et-éthique)
+- [Architecture technique](#-architecture-technique)
+- [Limitations](#-limitations)
+- [Développements futurs](#-développements-futurs)
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## 🚀 Fonctionnalités
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+### ✅ Fonctionnalités principales
+- **Scanner réseau** : Détection d'hôtes actifs et scan de ports TCP/UDP
+- **Banner Grabbing** : Récupération automatique des bannières de services
+- **Sniffer réseau** : Capture de
+ paquets avec filtres BPF personnalisables
+- **Génération de rapports** : Export en JSON, CSV, Markdown et HTML
+- **Interface graphique** : GUI Tkinter intuitive avec onglets
+- **Multi-threading** : Support des scans parallèles pour de meilleures performances
 
-## Add your files
+### 🎯 Formats de cibles supportés
+- IP simple : `192.168.1.1`
+- Plage CIDR : `192.168.1.0/24`
+- Plage personnalisée : `192.168.1.1-192.168.1.10`
+- Liste d'IP : `192.168.1.1,192.168.1.5,192.168.1.10`
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+## 🏗️ Architecture
+
+Le projet est organisé en modules fonctionnels distincts :
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.esiea.fr/elsalhy/python-network-pentesting-tool.git
-git branch -M main
-git push -uf origin main
+├── main.py              # Point d'entrée avec GUI et CLI
+├── scanner.py           # Scanner IP et ports (TCP/UDP)
+├── banner_grabber.py    # Récupération des bannières
+├── sniffer.py          # Capture de paquets réseau
+├── reporter.py         # Génération de rapports
+├── utils.py            # Fonctions utilitaires
+└── README.md           # Documentation
 ```
 
-## Integrate with your tools
+## 📦 Installation
 
-- [ ] [Set up project integrations](https://gitlab.esiea.fr/elsalhy/python-network-pentesting-tool/-/settings/integrations)
+### Prérequis
+- Python 3.7+
 
-## Collaborate with your team
+### Dépendances
+```bash
+pip install scapy tkinter
+```
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+## 💻 Utilisation
 
-## Test and Deploy
+### Interface en ligne de commande
 
-Use the built-in continuous integration in GitLab.
+```bash
+python main.py [OPTIONS]
+```
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+### Interface graphique
 
-***
+Lancez simplement le script sans arguments pour ouvrir l'interface graphique :
 
-# Editing this README
+```bash
+python main.py
+```
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+L'interface propose deux onglets :
+- **Scan** : Configuration et lancement des scans réseau
+- **Sniff** : Capture de paquets réseau
 
-## Suggestions for a good README
+## 📖 Exemples d'utilisation
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+### Scans basiques
 
-## Name
-Choose a self-explaining name for your project.
+```bash
+# Scan d'une IP sur les ports courants
+python main.py --target 192.168.1.10 --ports 21,22,25,80,110,443
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+# Scan d'un sous-réseau complet
+python main.py --target 192.168.1.0/24 --ports 1-1024
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+# Scan avec récupération de bannières
+python main.py --target 192.168.1.10 --ports 21,22,80 --grab_banner
+```
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+### Scans avancés
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+```bash
+# Scan UDP avec rapport JSON
+python main.py --target 192.168.1.0/24 --ports 53,161 --udp --report json
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+# Scan multi-threadé avec exclusions
+python main.py --target 192.168.1.0/24 --ports 1-1000 --threads 50 --exclude 192.168.1.1,192.168.1.254
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+# Scan lent avec délai
+python main.py --target 192.168.1.10 --ports 1-100 --delay 2 --timeout 5
+```
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+### Capture réseau
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+```bash
+# Sniffer sur toutes les interfaces
+python main.py --interface "" --filter "tcp port 80" --max_packets 100
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+# Capture avec sauvegarde
+python main.py --interface eth0 --output capture.pcap --max_packets 500
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+# Filtrage avancé
+python main.py --interface Wi-Fi --filter "host 192.168.1.1 and port 443"
+```
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+## 🛠️ Options scanner :
 
-## License
-For open source projects, say how it is licensed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+### Options basiques :
+
+| Option | Description | Valeur par défaut |
+|--------|-------------|-------------------|
+| `--target` | IP(s) cible(s) | `127.0.0.1-127.0.0.4,127.0.0.5` |
+| `--ports` | Ports à scanner | `21,22,25,80,110,135,143,443,445` |
+| `--udp` | Activer le scan UDP | `False` |
+| `--grab_banner` | Récupérer les bannières | `True` |
+| `--report` | Format de rapport | `html` |
+| `--delay` | Délai entre scans (sec) | `0` |
+
+
+### Options avancées :
+
+| Option | Description | Valeur par défaut |
+|--------|-------------|-------------------|
+| `--timeout` | Timeout par port (sec) | `2` |
+| `--threads` | Nombre de threads | `1` |
+| `--exclude` | IPs à exclure | `127.0.0.2` |
+| `--verbose` | Mode verbeux | `True` |
+
+
+## 🛠️ Options sniffer :
+
+| `--interface` | Interface réseau | `Wi-Fi` |
+| `--filter` | Filtre BPF | `tcp port 443` |
+| `--output` | Fichier de sortie .pcap | `sniff_output.pcap` |
+| `--max_packets` | Limite de paquets | `30` |
+
+
+## 📊 Génération de rapports
+
+L'outil supporte 4 formats de rapport :
+
+### JSON
+```json
+{
+  "scan_info": {
+    "timestamp": "2025-06-12T10:30:00",
+    "total_hosts": 5,
+    "total_open_ports": 12
+  },
+  "results": {
+    "192.168.1.1": {
+      "status": "up",
+      "open_ports": 3,
+      "ports": [
+        {
+          "port": 22,
+          "protocol": "tcp",
+          "service": "ssh",
+          "banner": "OpenSSH 7.4"
+        }
+      ]
+    }
+  }
+}
+```
+
+### HTML
+Rapport web interactif avec CSS intégré, tableaux triables et design responsive.
+
+### Markdown
+Format idéal pour la documentation technique avec syntaxe GitHub.
+
+### CSV
+Format compatible avec Excel et outils d'analyse de données.
+
+## 🔒 Sécurité et éthique
+
+⚠️ **IMPORTANT** : Cet outil est destiné uniquement à des fins éducatives et de test sur des environnements autorisés.
+
+### Utilisation légale
+- ✅ Tests sur vos propres machines
+- ✅ Environnements de laboratoire (Metasploitable, DVWA)
+- ✅ Réseaux avec autorisation écrite explicite
+- ❌ Scan de réseaux tiers sans autorisation
+- ❌ Utilisation malveillante
+
+### Recommandations
+- Utilisez des machines virtuelles isolées
+- Respectez les politiques de sécurité de votre organisation
+- Limitez l'intensité des scans pour éviter la surcharge réseau
+
+## 🔧 Architecture technique
+
+### Composants principaux
+
+#### Scanner (`scanner.py`)
+- **Détection d'hôtes** : Ping ICMP multi-plateforme
+- **Scan TCP** : Socket connect avec timeout configurables  
+- **Scan UDP** : Détection basée sur les réponses ICMP
+- **Multi-threading** : Pool de workers pour les performances
+- **Gestion d'erreurs** : Récupération gracieuse des échecs
+
+#### Banner Grabber (`banner_grabber.py`)
+- **Connexion non-bloquante** : Utilisation de `select()` pour éviter les blocages
+- **Timeout intelligent** : Adaptation selon le type de service
+- **Encodage robuste** : Gestion des caractères non-ASCII
+- **Cache des résultats** : Évite les connexions redondantes
+
+#### Sniffer (`sniffer.py`)
+- **Interface Scapy** : Capture de paquets professionnelle
+- **Filtres BPF** : Syntaxe compatible tcpdump/Wireshark
+- **Sauvegarde PCAP** : Format standard pour l'analyse
+- **Gestion des privilèges** : Détection automatique des permissions
+
+#### Reporter (`reporter.py`)
+- **Templates modulaires** : Génération multi-format
+- **Métadonnées enrichies** : Horodatage, statistiques, contexte
+- **Validation des données** : Vérification de cohérence
+- **Compression** : Optimisation pour les gros rapports
+
+### Gestion des erreurs
+- Validation stricte des entrées utilisateur
+- Récupération gracieuse des timeouts réseau
+- Logging détaillé pour le débogage
+- Gestion des interruptions clavier
+
+### Performance
+- **Multi-threading** : Jusqu'à 100 threads simultanés
+- **Pool de connexions** : Réutilisation des sockets
+- **Mise en cache** : Évite les opérations redondantes
+- **Optimisation mémoire** : Traitement en streaming pour les gros volumes
+
+## 📝 Limitations
+
+### Techniques
+- **Détection de pare-feu** : Certains firewall peuvent bloquer ou ralentir les scans
+- **Services non-standard** : Banner grabbing limité aux services qui exposent des bannières
+- **Performance UDP** : Scan UDP naturellement plus lent que TCP
+- **Privilèges système** : Sniffing nécessite des droits administrateur
+
+### Fonctionnelles
+- **Pas de scan SYN** : Utilise uniquement TCP connect (plus détectable)
+- **Détection d'OS limitée** : Pas d'empreinte système avancée
+- **Pas de contournement** : Aucune technique d'évasion IDS/IPS
+- **Interface simple** : GUI basique sans graphiques avancés
+
+## 🚀 Développements futurs
+
+### Améliorations prévues
+- [ ] **Module exploit** : Intégration de tests de vulnérabilités basiques  
+- [ ] **Scan IPv6** : Support complet du protocole IPv6
+- [ ] **Interface web** : Dashboard HTML5 temps réel
+- [ ] **Machine learning** : Classification automatique des services
+- [ ] **Géolocalisation** : Mapping des adresses IP
+
+### Optimisations
+- [ ] **Base de données** : Persistance des résultats avec SQLite
+- [ ] **Configuration** : Fichiers de profils prédéfinis
+- [ ] **Plugins** : Architecture modulaire extensible
