@@ -1,14 +1,15 @@
+import argparse
+import sys
+import threading
 import tkinter as tk
-from tkinter import ttk, messagebox, filedialog
+from tkinter import ttk
+
 from scanner import scan_targets
 from banner_grabber import grab_banners
 from sniffer import start_sniffing, stop_event
 from reporter import generate_report
-from utils import validate_ip, parse_ports
-import threading
-import io
-import sys
-import argparse
+from utils import parse_ports
+
 
 class RedirectText(object):
     def __init__(self, text_ctrl):
