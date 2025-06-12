@@ -58,12 +58,16 @@ def start_sniffing(
         logger(f"[*] Filter: {bpf_filter or 'none'}")
         logger(f"[*] Count: {count or 'unlimited'}")
         
+        stop_event.clear()
+
         packets = sniff(
             iface=interface,
             filter=bpf_filter,
             prn=handler,
-            count=count
+            count=count,
+            stop_filter=lambda pkt: stop_event.is_set()
         )
+
         
         if output:
             wrpcap(output, packets)
@@ -81,3 +85,14 @@ def start_sniffing(
     except Exception as e:
         logger(f"[!] Sniffing failed: {e}")
         return False
+
+
+from threading import Event
+
+stop_event = Event()
+
+def stop_sniffing():
+    """
+    Déclenche l'arrêt du sniffing.
+    """
+    stop_event.set()

@@ -1,6 +1,9 @@
 # Ignore Python cache files
 __pycache__/
 *.pyc
-test_banner_server.py
+.gitignore
+
 scan_report*
 sniff_output.pcap
+
+test_banner_server.py
