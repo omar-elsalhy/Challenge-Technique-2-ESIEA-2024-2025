@@ -20,6 +20,7 @@ Un outil de pentest réseau complet développé en Python, inspiré de Nmap, cap
 - [Architecture technique](#-architecture-technique)
 - [Limitations](#-limitations)
 - [Développements futurs](#-développements-futurs)
+- [Captures d'écran](#-Captures-d'écran)
 
 ## 🚀 Fonctionnalités
 
@@ -46,10 +47,10 @@ Le projet est organisé en modules fonctionnels distincts :
 ├── main.py              # Point d'entrée avec GUI et CLI
 ├── scanner.py           # Scanner IP et ports (TCP/UDP)
 ├── banner_grabber.py    # Récupération des bannières
-├── sniffer.py          # Capture de paquets réseau
-├── reporter.py         # Génération de rapports
-├── utils.py            # Fonctions utilitaires
-└── README.md           # Documentation
+├── sniffer.py           # Capture de paquets réseau
+├── reporter.py          # Génération de rapports
+├── utils.py             # Fonctions utilitaires
+└── README.md            # Documentation
 ```
 
 ## 📦 Installation
@@ -278,3 +279,35 @@ Format compatible avec Excel et outils d'analyse de données.
 - [ ] **Base de données** : Persistance des résultats avec SQLite
 - [ ] **Configuration** : Fichiers de profils prédéfinis
 - [ ] **Plugins** : Architecture modulaire extensible
+
+
+## Captures d'écran
+
+# 1re Exemple de Scan TCP Réussi avec génération de rapport
+- Capture 1 : [Configuration de l'interface pour un scan TCP avec rapport HTML]
+
+  ![Capture 1](screenshots/Capture_1.png "Interface configurée pour un scan TCP avec rapport HTML")
+
+- Capture 2 : [rapport html du scan TCP montrant les ports ouverts et l'exclusion d'IPs.]
+
+  ![Capture 2](screenshots/capture_2.jpg "Rapport HTML montrant les ports ouverts lors d'un scan TCP")
+
+# 2ème exemple de Scan TCP Réussi avec génération de rapport
+- Capture 2 : [Configuration de l'interface pour un scan TCP avec rapport HTML]
+
+  ![Capture 3](screenshots/Capture_3.jpg "Interface configurée pour un scan TCP avec rapport HTML")
+
+- Capture 4 : [rapport html du scan TCP montrant le ports ouverts, le service ssh et la bannière.]
+
+  ![Capture 4](screenshots/capture_4.jpg "Rapport HTML montrant les ports ouverts lors d'un scan TCP")
+
+
+# Exemple de Scan UDP et génération de rapport
+- Capture 5 : [Configuration de l'interface pour un scan UDP avec rapport JSON]
+
+  ![Capture 5](screenshots/Capture_5.png "Interface configurée pour un scan UDP avec rapport JSON")
+
+- Capture 6 : [Rapport JSON du scan UDP]
+
+  ![Capture 6](screenshots/capture_6.png "Rapport JSON montrant une erreur UDP lors d'un scan UDP")
+    
