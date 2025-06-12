@@ -5,6 +5,7 @@ import platform
 from utils import logger, validate_ip, timer
 from time import sleep
 from banner_grabber import grab_banner
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 def is_host_alive(ip, timeout=1):
@@ -21,7 +22,6 @@ def is_host_alive(ip, timeout=1):
     except Exception as e:
         logger(f"[!] Ping error on {ip}: {e}")
         return False
-
 
 def parse_ip_range(target):
     """
@@ -84,51 +84,75 @@ def parse_ip_range(target):
             return []
 
 
-@timer
-def scan_targets(targets, ports, udp=False, delay=None):
-    results = {}
+from concurrent.futures import ThreadPoolExecutor, as_completed
+#from utils import parse_ip_range
 
+@timer
+def scan_targets(targets, ports, udp=False, delay=None, timeout=2, threads=10, exclude=None, verbose=False):
+    results = {}
+    exclude = set(exclude or [])
+
+    def scan_ip(ip):
+        if ip in exclude:
+            logger(f"[~] Skipping excluded IP: {ip}")
+            return None
+
+        if not validate_ip(ip):
+            logger(f"[!] Invalid IP: {ip}")
+            return None
+
+        if verbose:
+            logger(f"[*] Probing host {ip}...")
+
+        if not is_host_alive(ip, timeout=timeout):
+            logger(f"[-] Host {ip} is down.")
+            return None
+        else:
+            logger(f"[+] Host {ip} is active.")
+
+        open_ports = []
+        for port in ports:
+            if udp:
+                if udp_scan(ip, port, timeout=timeout):
+                    open_ports.append(port)
+            else:
+                if tcp_connect_scan(ip, port, timeout=timeout):
+                    open_ports.append(port)
+            if delay:
+                sleep(delay)
+
+        service_map = {
+            str(port): socket.getservbyport(port, 'tcp') if not udp else 'udp'
+            for port in open_ports
+        }
+
+        return ip, {
+            "ports": open_ports,
+            "services": service_map,
+            "banners": {}
+        }
+
+    all_ips = []
     for target in targets:
         try:
-            # Utilisation de la nouvelle fonction de parsing
             ips = parse_ip_range(target)
-            
             if not ips:
                 logger(f"[!] No valid IPs found for target: {target}")
                 continue
-
-            for ip in ips:
-                # Vérification si hôte est alive ou non
-                logger(f"[*] Probing host {ip}...")
-                if not is_host_alive(ip):
-                    logger(f"[-] Host {ip} is down or not responding.")
-                    continue
-                else:
-                    logger(f"[+] Host {ip} is active.")
-
-                open_ports = []
-                for port in ports:
-                    if udp:
-                        if udp_scan(ip, port):
-                            open_ports.append(port)
-                    else:
-                        if tcp_connect_scan(ip, port):
-                            open_ports.append(port)
-                    if delay:
-                        sleep(delay)
-
-                service_map = {str(port): socket.getservbyport(port, 'tcp') if not udp else 'udp' for port in open_ports}
-                #banner_map = {str(port): grab_banner(ip, port) for port in open_ports}
-                results[ip] = {
-                    "ports": open_ports,
-                    "services": service_map,
-                    "banners": {}
-                }
-
+            all_ips.extend(ips)
         except Exception as e:
-            logger(f"[!] Error scanning {target}: {e}")
+            logger(f"[!] Error parsing target {target}: {e}")
+
+    with ThreadPoolExecutor(max_workers=threads) as executor:
+        future_to_ip = {executor.submit(scan_ip, ip): ip for ip in all_ips}
+        for future in as_completed(future_to_ip):
+            result = future.result()
+            if result:
+                ip, data = result
+                results[ip] = data
 
     return results
+
 
 
 def tcp_connect_scan(ip, port, timeout=1):
@@ -142,7 +166,6 @@ def tcp_connect_scan(ip, port, timeout=1):
     except Exception as e:
         logger(f"[!] TCP scan error on {ip}:{port} - {e}")
     return False
-
 
 def udp_scan(ip, port, timeout=2):
     try:
@@ -159,3 +182,4 @@ def udp_scan(ip, port, timeout=2):
     except Exception as e:
         logger(f"[!] UDP scan error on {ip}:{port} - {e}")
     return False
+
