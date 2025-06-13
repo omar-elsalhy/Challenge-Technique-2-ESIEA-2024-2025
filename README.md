@@ -291,7 +291,7 @@ Format compatible avec Excel et outils d'analyse de données.
 
 - Capture 2 : [Rapport HTML du scan TCP montrant les ports ouverts et l'exclusion d'IPs]
 
-  ![Capture 2](screenshots/capture_2.jpg "Rapport HTML montrant les ports ouverts lors d'un scan TCP")
+  ![Capture 2](screenshots/Capture_2.jpg "Rapport HTML montrant les ports ouverts lors d'un scan TCP")
 
 ### Exemple de Scan TCP avec génération de rapport et bannières
 - Capture 3 : [Configuration de l'interface pour un scan TCP avec rapport HTML et bannière]
@@ -300,7 +300,7 @@ Format compatible avec Excel et outils d'analyse de données.
 
 - Capture 4 : [Rapport html du scan TCP montrant le ports ouverts, le service ssh et la bannière]
 
-  ![Capture 4](screenshots/capture_4.jpg "Rapport HTML montrant les ports ouverts lors d'un scan TCP")
+  ![Capture 4](screenshots/Capture_4.jpg "Rapport HTML montrant les ports ouverts lors d'un scan TCP")
 
 
 ### Exemple de Scan UDP et génération de rapport
@@ -310,7 +310,7 @@ Format compatible avec Excel et outils d'analyse de données.
 
 - Capture 6 : [Rapport JSON du scan UDP]
 
-  ![Capture 6](screenshots/capture_6.png "Rapport JSON montrant une erreur UDP lors d'un scan UDP")
+  ![Capture 6](screenshots/Capture_6.png "Rapport JSON montrant une erreur UDP lors d'un scan UDP")
 
 
 ### Exemple de scan en pré-remplissant avec la ligne de commande
