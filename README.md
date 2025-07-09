@@ -2,6 +2,13 @@
 
 Un outil de pentest réseau complet développé en Python, inspiré de Nmap, capable de scanner des plages IP, identifier les ports ouverts, récupérer des bannières, sniffer le trafic réseau et générer des rapports détaillés.
 
+
+## 👥 Auteurs
+
+- **Omar EL SALHY** - [GitHub : omar-elsalhy](https://github.com/omar-elsalhy)
+- **Azer KHEMISSI** – [GitHub : AzerKhemissi](https://github.com/AzerKhemissi)
+
+
 ## 📋 Table des matières
 
 - [Fonctionnalités](#-fonctionnalités)
@@ -330,5 +337,3 @@ Format compatible avec Excel et outils d'analyse de données.
 - Capture 10 : [Affichage du traffic avec un filtre et sauvegarde des paquets pour sous format pcap]
 
   ![Capture 10](screenshots/Capture_10.png)
-
-

@@ -7,3 +7,4 @@ scan_report*
 sniff_output.pcap
 
 test_banner_server.py
+score.sh
